@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRR-SDM Platform - Integrated Return-Relocation Spatial Decision Model</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+    <!-- Our Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20260124">
+</head>
+<body>
+    <div class="platform-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <h1>🗺️ IRR-SDM Platform</h1>
+                <p class="subtitle">Integrated Return-Relocation Spatial Decision Model</p>
+                <p class="developers">Developed by: Dr. Alaa Khallouf & Maha Hana</p>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Panel - Input -->
+            <div class="left-panel">
+                <div class="panel-header">
+                    <h2>📝 Input Parameters</h2>
+                </div>
+                
+                <div class="scroll-container">
+                    <!-- Camps List -->
+                    <div class="section">
+                        <h3>🏕️ قائمة المخيمات</h3>
+                        <div class="form-group">
+                            <input type="text" id="campSearch" placeholder="ابحث عن مخيم..." 
+                                   onkeyup="filterCamps()" 
+                                   style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div id="campList" style="max-height: 300px; overflow-y: auto; margin-top: 10px;">
+                            <p style="text-align: center; color: #64748b; padding: 20px;">جاري التحميل...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Camp Information -->
+                    <div class="section">
+                        <h3>📋 معلومات المخيم المختار</h3>
+                        <div class="form-group">
+                            <label>Camp Name</label>
+                            <input type="text" id="campName" placeholder="e.g., Al-Hol Camp" value="Al-Hol Camp">
+                        </div>
+                        <div class="form-group">
+                            <label>Region</label>
+                            <select id="region" onchange="updateMapRegion()">
+                                <option value="north">Northern Idleb</option>
+                                <option value="south">Southern Syria</option>
+                                <option value="east">East Euphrates</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Latitude</label>
+                                <input type="text" id="lat" placeholder="36.5" value="36.5">
+                            </div>
+                            <div class="form-group">
+                                <label>Longitude</label>
+                                <input type="text" id="lng" placeholder="37.0" value="37.0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Level 1: Return Readiness -->
+                    <div class="section level-1">
+                        <h3>👥 Level 1: Return Readiness (RRI)</h3>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>A1 - Knowledge of Origin</span>
+                                <span class="slider-value" id="val-A1">3.0</span>
+                            </div>
+                            <input type="range" id="A1" min="0" max="5" step="0.5" value="3" oninput="updateValue('A1')">
+                            <small>0 = Unknown | 5 = Fully Known</small>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>A2 - Intention to Return</span>
+                                <span class="slider-value" id="val-A2">3.0</span>
+                            </div>
+                            <input type="range" id="A2" min="0" max="5" step="0.5" value="3" oninput="updateValue('A2')">
+                            <small>0 = No Intention | 5 = Strong Intention</small>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>A3 - Household Vulnerability</span>
+                                <span class="slider-value" id="val-A3">3.0</span>
+                            </div>
+                            <input type="range" id="A3" min="0" max="5" step="0.5" value="3" oninput="updateValue('A3')">
+                            <small>0 = Very Vulnerable | 5 = Resilient</small>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>A4 - Skills & Livelihoods</span>
+                                <span class="slider-value" id="val-A4">3.0</span>
+                            </div>
+                            <input type="range" id="A4" min="0" max="5" step="0.5" value="3" oninput="updateValue('A4')">
+                            <small>0 = No Skills | 5 = Advanced Skills</small>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>A5 - Displacement Duration</span>
+                                <span class="slider-value" id="val-A5">3.0</span>
+                            </div>
+                            <input type="range" id="A5" min="0" max="5" step="0.5" value="3" oninput="updateValue('A5')">
+                            <small>0 = Very Long | 5 = Short</small>
+                        </div>
+                    </div>
+
+                    <!-- Level 2: Origin Viability -->
+                    <div class="section level-2">
+                        <h3>🏠 Level 2: Origin Viability (OVS)</h3>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>B1 - Destruction Level</span>
+                                <span class="slider-value" id="val-B1">3.0</span>
+                            </div>
+                            <input type="range" id="B1" min="0" max="5" step="0.5" value="3" oninput="updateValue('B1')">
+                            <small>0 = Total Destruction | 5 = Intact</small>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>B2 - Infrastructure</span>
+                                <span class="slider-value" id="val-B2">3.0</span>
+                            </div>
+                            <input type="range" id="B2" min="0" max="5" step="0.5" value="3" oninput="updateValue('B2')">
+                            <small>0 = None | 5 = Excellent</small>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>B3 - Services</span>
+                                <span class="slider-value" id="val-B3">3.0</span>
+                            </div>
+                            <input type="range" id="B3" min="0" max="5" step="0.5" value="3" oninput="updateValue('B3')">
+                            <small>0 = Unavailable | 5 = Full Services</small>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>B4 - Security</span>
+                                <span class="slider-value" id="val-B4">3.0</span>
+                            </div>
+                            <input type="range" id="B4" min="0" max="5" step="0.5" value="3" oninput="updateValue('B4')">
+                            <small>0 = Unsafe | 5 = Fully Secure</small>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>B5 - Property Rights</span>
+                                <span class="slider-value" id="val-B5">3.0</span>
+                            </div>
+                            <input type="range" id="B5" min="0" max="5" step="0.5" value="3" oninput="updateValue('B5')">
+                            <small>0 = Disputed | 5 = Clear</small>
+                        </div>
+                    </div>
+
+                    <!-- Level 3: Relocation Suitability -->
+                    <div class="section level-3">
+                        <h3>📍 Level 3: Relocation Suitability (RSS)</h3>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>C1 - Legal Land Status</span>
+                                <span class="slider-value" id="val-C1">3.0</span>
+                            </div>
+                            <input type="range" id="C1" min="0" max="5" step="0.5" value="3" oninput="updateValue('C1')">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>C2 - Expansion Capacity</span>
+                                <span class="slider-value" id="val-C2">3.0</span>
+                            </div>
+                            <input type="range" id="C2" min="0" max="5" step="0.5" value="3" oninput="updateValue('C2')">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>C3 - Distance from Risks</span>
+                                <span class="slider-value" id="val-C3">3.0</span>
+                            </div>
+                            <input type="range" id="C3" min="0" max="5" step="0.5" value="3" oninput="updateValue('C3')">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>C4 - Access & Services</span>
+                                <span class="slider-value" id="val-C4">3.0</span>
+                            </div>
+                            <input type="range" id="C4" min="0" max="5" step="0.5" value="3" oninput="updateValue('C4')">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>C5 - Proximity to Work</span>
+                                <span class="slider-value" id="val-C5">3.0</span>
+                            </div>
+                            <input type="range" id="C5" min="0" max="5" step="0.5" value="3" oninput="updateValue('C5')">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>C6 - Urban Integration</span>
+                                <span class="slider-value" id="val-C6">3.0</span>
+                            </div>
+                            <input type="range" id="C6" min="0" max="5" step="0.5" value="3" oninput="updateValue('C6')">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>C7 - Camp Closure Support</span>
+                                <span class="slider-value" id="val-C7">3.0</span>
+                            </div>
+                            <input type="range" id="C7" min="0" max="5" step="0.5" value="3" oninput="updateValue('C7')">
+                        </div>
+                    </div>
+
+                    <!-- Level 4: Strategic Impact -->
+                    <div class="section level-4">
+                        <h3>🏗️ Level 4: Strategic Impact (SIS)</h3>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>D1 - Intervention Cost</span>
+                                <span class="slider-value" id="val-D1">3.0</span>
+                            </div>
+                            <input type="range" id="D1" min="0" max="5" step="0.5" value="3" oninput="updateValue('D1')">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>D2 - Implementation Speed</span>
+                                <span class="slider-value" id="val-D2">3.0</span>
+                            </div>
+                            <input type="range" id="D2" min="0" max="5" step="0.5" value="3" oninput="updateValue('D2')">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>D3 - Partnerships</span>
+                                <span class="slider-value" id="val-D3">3.0</span>
+                            </div>
+                            <input type="range" id="D3" min="0" max="5" step="0.5" value="3" oninput="updateValue('D3')">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>D4 - Development Return</span>
+                                <span class="slider-value" id="val-D4">3.0</span>
+                            </div>
+                            <input type="range" id="D4" min="0" max="5" step="0.5" value="3" oninput="updateValue('D4')">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>D5 - Prevent Informality</span>
+                                <span class="slider-value" id="val-D5">3.0</span>
+                            </div>
+                            <input type="range" id="D5" min="0" max="5" step="0.5" value="3" oninput="updateValue('D5')">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>D6 - Regional Impact</span>
+                                <span class="slider-value" id="val-D6">3.0</span>
+                            </div>
+                            <input type="range" id="D6" min="0" max="5" step="0.5" value="3" oninput="updateValue('D6')">
+                        </div>
+                    </div>
+
+                    <!-- Risk Factor -->
+                    <div class="section risk-section">
+                        <h3>⚠️ Risk Factor</h3>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>Overall Risk Assessment</span>
+                                <span class="slider-value" id="val-riskFactor">3.0</span>
+                            </div>
+                            <input type="range" id="riskFactor" min="0" max="5" step="0.5" value="3" oninput="updateValue('riskFactor')">
+                            <small>0 = Very High Risk | 5 = No Risk</small>
+                        </div>
+                    </div>
+
+                    <!-- Calculate Button -->
+                    <button class="btn-calculate" onclick="calculateResults()">
+                        📈 Calculate Final Score & Decision
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel - Map & Results -->
+            <div class="right-panel">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('map-tab')">🗺️ Map</button>
+                    <button class="tab" onclick="showTab('results')">📊 Results</button>
+                </div>
+
+                <!-- Map Tab -->
+                <div id="map-section" class="tab-content active">
+                    <div id="map"></div>
+                    <div class="legend">
+                        <h4>مفتاح الخريطة</h4>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #3b82f6;"></div>
+                            <span>🔵 مخيم غير محسوب (اختره للتقييم)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #10b981;"></div>
+                            <span>🟢 عودة فورية (FS ≥ 4.0)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #eab308;"></div>
+                            <span>🟡 عودة تدريجية (FS 3.0-3.9)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #f97316;"></div>
+                            <span>🟠 إعادة توطين (FS 2.0-2.9)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #fb923c;"></div>
+                            <span>🔶 اندماج محلي (FS 1.5-1.9)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ef4444;"></div>
+                            <span>🔴 لا عودة (FS < 1.5)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Tab -->
+                <div id="results-section" class="tab-content">
+                    <div id="resultContent">
+                        <!-- Results will appear here -->
+                        <div style="text-align: center; padding: 40px; color: #64748b;">
+                            <h3>No Results Yet</h3>
+                            <p>Click "Calculate" button to see results</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=20260124"></script>
+</body>
+</html>
